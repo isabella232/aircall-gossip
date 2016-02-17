@@ -19,6 +19,11 @@ typedef enum {
 } GSUserAgentState;
 
 
+@protocol GSUserAgentCallbackDelegate <NSObject>
+@optional
+    -(void)agentStatusChanged:(GSUserAgentState)status;
+@end
+
 /// Mains SIP user agent interface. Applications should configure the shared instance on startup.
 /** Only a single GSUserAgent may be created for each application since PJSIP only supports a single user agent at a time.
  *  Applications should follow the following steps to initialize the agent:
@@ -29,6 +34,8 @@ typedef enum {
  *  4. (Optional) GSAccount::connect to the SIP server
  */
 @interface GSUserAgent : NSObject
+
+@property (nonatomic, strong) id delegate;
 
 @property (nonatomic, strong, readonly) GSAccount *account; ///< Default GSAccount instance with the configured SIP account registration.
 @property (nonatomic, readonly) GSUserAgentState status; ///< User agent configuration state. Supports KVO notification.

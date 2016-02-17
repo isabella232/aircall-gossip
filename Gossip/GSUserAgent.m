@@ -14,6 +14,8 @@
 #import "Util.h"
 
 
+
+
 @implementation GSUserAgent {
     GSConfiguration *_config;
     pjsua_transport_id _transportId;
@@ -69,12 +71,14 @@
 - (void)setStatus:(GSUserAgentState)status {
     [self willChangeValueForKey:@"status"];
     _status = status;
+    [self.delegate agentStatusChanged: _status];
     [self didChangeValueForKey:@"status"];
 }
 
 
 - (BOOL)configure:(GSConfiguration *)config {
-    GSAssert(!_config, @"Gossip: User agent is already configured.");
+//    GSAssert(!_config, @"Gossip: User agent is already configured.");
+    if (_config) [self reset];
     _config = [config copy];
     
     // create agent
@@ -145,7 +149,6 @@
     _transportId = PJSUA_INVALID_ID;
     _account = nil;
     _config = nil;
-    NSLog(@"Destroying...");
     GSReturnNoIfFails(pjsua_destroy());
     [self setStatus:GSUserAgentStateDestroyed];
     return YES;

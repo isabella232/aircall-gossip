@@ -12,17 +12,25 @@
 
 /// Call session states.
 typedef enum {
-    GSCallStatusReady, ///< Call is ready to be made/pickup.
-    GSCallStatusCalling, ///< Call is ringing.
-    GSCallStatusConnecting, ///< User or other party has pick up the call.
-    GSCallStatusConnected, ///< Call has connected and sound is now coming through.
-    GSCallStatusDisconnected, ///< Call has been disconnected (user hangup/other party hangup.)
+    GSCallStatusReady = 0, ///< Call is ready to be made/pickup.
+    GSCallStatusCalling = 1, ///< Call is ringing.
+    GSCallStatusConnecting = 2, ///< User or other party has pick up the call.
+    GSCallStatusConnected = 3, ///< Call has connected and sound is now coming through.
+    GSCallStatusDisconnected = 4, ///< Call has been disconnected (user hangup/other party hangup.)
 } GSCallStatus;
+
+
+@protocol CallsCallbackDelegate <NSObject>
+@optional
+    -(void)callStatusChanged:(GSCallStatus)status;
+@end
 
 
 // TODO: Video call support?
 /// Represents a single calling session (either incoming or outgoing.)
 @interface GSCall : NSObject
+
+@property (nonatomic, strong) id delegate;
 
 @property (nonatomic, unsafe_unretained, readonly) GSAccount *account; ///< An account this call is being made from.
 @property (nonatomic, readonly) GSRingback *ringback; ///< Returns the current GSRingback instance used to play the call's ringback.
@@ -35,7 +43,12 @@ typedef enum {
 
 /// Creats a new outgoing call to the specified remoteUri.
 /** Use begin() to begin calling. */
-+ (id)outgoingCallToUri:(NSString *)remoteUri fromAccount:(GSAccount *)account;
++ (id)outgoingCallToUri:(NSString *)remoteUri
+            fromAccount:(GSAccount *)account
+           withCallerId:(NSString *)callerId
+             withUserId:(NSString *)userId
+   withInternalToUserId:(NSString *)internalToUserId
+           withAppToApp:(NSString *)appToApp;
 
 /// Creates a new incoming call from the specified PJSIP call id. And associate it with the speicifed account.
 /** Do not call this method directly, implement GSAccountDelegate and listen to the
@@ -55,4 +68,13 @@ typedef enum {
 
 - (BOOL)sendDTMFDigits:(NSString *)digits; ///< Sends DTMF digits over the call.
 
+- (NSString *)getFrom;
+- (void)holdCall;
+- (void)removeHoldCall;
+
+- (void)muteMicrophone;
+- (void)unmuteMicrophone;
+
+- (void)useSpeaker;
+- (void)stopSpeaker;
 @end

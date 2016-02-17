@@ -16,7 +16,7 @@
 
 // PJSIP status check macros
 #define GSLogSipError(status_)                                      \
-    NSLog(@"Gossip: %@", [GSPJUtil errorWithSIPStatus:status_]);
+    NSLog(@"GOSSIP: %@", [GSPJUtil errorWithSIPStatus:status_]);
 
 #define GSLogIfFails(aStatement_) do {      \
     pj_status_t status = (aStatement_);     \

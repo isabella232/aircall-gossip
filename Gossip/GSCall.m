@@ -16,6 +16,8 @@
 #import "PJSIP.h"
 #import "Util.h"
 
+#import <AVFoundation/AVFoundation.h>
+
 
 @implementation GSCall {
     pjsua_call_id _callId;
@@ -24,9 +26,20 @@
     float _volumeScale;
 }
 
-+ (id)outgoingCallToUri:(NSString *)remoteUri fromAccount:(GSAccount *)account {
++ (id)outgoingCallToUri:(NSString *)remoteUri
+            fromAccount:(GSAccount *)account
+           withCallerId:(NSString *)callerId
+             withUserId:(NSString *)userId
+   withInternalToUserId:(NSString *)internalToUserId
+           withAppToApp:(NSString *)appToApp
+{
     GSOutgoingCall *call = [GSOutgoingCall alloc];
-    call = [call initWithRemoteUri:remoteUri fromAccount:account];
+    call = [call initWithRemoteUri:remoteUri
+                       fromAccount:account
+                      withCallerId:callerId
+                        withUserId:userId
+              withInternalToUserId:internalToUserId
+                      withAppToApp:appToApp];
     
     return call;
 }
@@ -105,6 +118,7 @@
 - (void)setStatus:(GSCallStatus)status {
     [self willChangeValueForKey:@"status"];
     _status = status;
+    [self.delegate callStatusChanged: _status];
     [self didChangeValueForKey:@"status"];
 }
 
@@ -148,6 +162,7 @@
 - (BOOL)sendDTMFDigits:(NSString *)digits {
     pj_str_t pjDigits = [GSPJUtil PJStringWithString:digits];
     pjsua_call_dial_dtmf(_callId, &pjDigits);
+    return NO;
 }
 
 
@@ -169,7 +184,7 @@
 - (void)callStateDidChange:(NSNotification *)notif {
     pjsua_call_id callId = GSNotifGetInt(notif, GSSIPCallIdKey);
     pjsua_acc_id accountId = GSNotifGetInt(notif, GSSIPAccountIdKey);
-    if (callId != _callId || accountId != _account.accountId)
+    if ( callId != _callId || _account == nil || accountId != _account.accountId || callId == PJSUA_INVALID_ID)
         return;
     
     pjsua_call_info callInfo;
@@ -181,17 +196,17 @@
             callStatus = GSCallStatusReady;
         } break;
             
-        case PJSIP_INV_STATE_CALLING:
+        case PJSIP_INV_STATE_CALLING: {
+            callStatus = GSCallStatusCalling;
+        } break;
         case PJSIP_INV_STATE_INCOMING: {
             callStatus = GSCallStatusCalling;
         } break;
-            
         case PJSIP_INV_STATE_EARLY:
         case PJSIP_INV_STATE_CONNECTING: {
             [self startRingback];
             callStatus = GSCallStatusConnecting;
         } break;
-            
         case PJSIP_INV_STATE_CONFIRMED: {
             [self stopRingback];
             callStatus = GSCallStatusConnected;
@@ -203,8 +218,8 @@
         } break;
     }
     
-    __block id self_ = self;
-    dispatch_async(dispatch_get_main_queue(), ^{ [self_ setStatus:callStatus]; });
+    __weak typeof(self) weakSelf = self;
+    dispatch_async(dispatch_get_main_queue(), ^{ [weakSelf setStatus:callStatus]; });
 }
 
 - (void)callMediaStateDidChange:(NSNotification *)notif {
@@ -258,6 +273,103 @@
                         userInfo:info];
     
     return YES;
+}
+
+- (NSString *)getFrom {
+    pjsua_call_info callInfo;
+    pjsua_call_get_info(_callId, &callInfo);
+
+    NSString *fromSip = [NSString stringWithFormat:@"%s", callInfo.remote_info.ptr];
+    fromSip = [fromSip componentsSeparatedByString:@":"][1];
+    return [fromSip componentsSeparatedByString:@"@"][0];
+}
+
+
+- (void)holdCall {
+	pjsua_call_info callInfo;
+	pj_status_t status = pjsua_call_get_info(_callId, &callInfo);
+	if (status == PJ_SUCCESS) {
+		pjsua_call_set_hold(_callId, nil);
+		pjsua_set_no_snd_dev();
+	}
+}
+
+- (void)removeHoldCall {
+	pjsua_call_info callInfo;
+	pj_status_t status = pjsua_call_get_info(_callId, &callInfo);
+	if (status == PJ_SUCCESS) {
+		pjsua_call_reinvite(_callId, PJ_TRUE, nil);
+		pjsua_set_snd_dev(0, 0);
+	}
+}
+
+- (void)muteMicrophone {
+	pjsua_call_info ci;
+	pj_status_t status = pjsua_call_get_info(_callId, &ci);
+	if (status == PJ_SUCCESS) {
+		pjsua_conf_port_id pjsipConfAudioId = ci.conf_slot;
+		@try {
+			if( pjsipConfAudioId != 0 ) {
+				pjsua_conf_disconnect(0, pjsipConfAudioId);
+			}
+		}
+		@catch (NSException *exception) {
+			NSLog(@"Unable to mute microphone: %@", exception);
+		}
+	}
+}
+
+- (void)unmuteMicrophone {
+	pjsua_call_info ci;
+	pj_status_t status = pjsua_call_get_info(_callId, &ci);
+	if (status == PJ_SUCCESS) {
+		pjsua_conf_port_id pjsipConfAudioId = ci.conf_slot;
+		@try {
+			if( pjsipConfAudioId != 0 ) {
+				pjsua_conf_connect(0,pjsipConfAudioId);
+			}
+		}
+		@catch (NSException *exception) {
+			NSLog(@"Unable to un-mute microphone: %@", exception);
+		}
+	}
+}
+
+- (void)useSpeaker {
+	/** detect speaker with pjsip **/
+//	pjmedia_aud_dev_route route = PJMEDIA_AUD_DEV_ROUTE_LOUDSPEAKER;
+//	pjmedia_aud_stream_set_cap(nil, PJMEDIA_AUD_DEV_CAP_INPUT_ROUTE, &route);
+//	pj_status_t status = pjsua_snd_set_setting(PJMEDIA_AUD_DEV_CAP_INPUT_ROUTE, &route, PJ_FALSE);
+//	if (status != PJ_SUCCESS){
+//		NSLog(@"Error enabling loudspeaker");
+//	}
+	pjsua_call_info ci;
+
+
+	pjsua_call_get_info(_callId, &ci);
+	BOOL success;
+	AVAudioSession *session = [AVAudioSession sharedInstance];
+	NSError *error = nil;
+
+	success = [session setCategory:AVAudioSessionCategoryPlayAndRecord
+					   withOptions:AVAudioSessionCategoryOptionMixWithOthers
+							 error:&error];
+	if (!success) NSLog(@"AVAudioSession error setCategory: %@", [error localizedDescription]);
+
+	success = [session overrideOutputAudioPort:AVAudioSessionPortOverrideSpeaker error:&error];
+	if (!success) NSLog(@"AVAudioSession error overrideOutputAudioPort: %@", [error localizedDescription]);
+
+	success = [session setActive:YES error:&error];
+	if (!success) NSLog(@"AVAudioSession error setActive: %@", [error localizedDescription]);
+}
+
+- (void)stopSpeaker {
+	BOOL success;
+	AVAudioSession *session = [AVAudioSession sharedInstance];
+	NSError *error = nil;
+
+	success = [session setActive:NO error:&error];
+	if (!success) NSLog(@"AVAudioSession error setActive: %@", [error localizedDescription]);
 }
 
 @end

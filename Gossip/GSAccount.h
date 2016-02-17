@@ -12,21 +12,23 @@
 
 /// Account Status enum.
 typedef enum {
-    GSAccountStatusOffline, ///< Account is offline or no registration has been done.
-    GSAccountStatusInvalid, ///< Gossip has attempted registration but the credentials were invalid.
-    GSAccountStatusConnecting, ///< Gossip is trying to register the account with the SIP server.
-    GSAccountStatusConnected, ///< Account has been successfully registered with the SIP server.
-    GSAccountStatusDisconnecting, ///< Account is being unregistered from the SIP server.
+    GSAccountStatusOffline = 0, ///< Account is offline or no registration has been done.
+    GSAccountStatusInvalid = -1, ///< Gossip has attempted registration but the credentials were invalid.
+    GSAccountStatusConnecting = 1, ///< Gossip is trying to register the account with the SIP server.
+    GSAccountStatusConnected = 2, ///< Account has been successfully registered with the SIP server.
+    GSAccountStatusDisconnecting = 3, ///< Account is being unregistered from the SIP server.
 } GSAccountStatus; ///< Account status enum.
 
 
 /// Delegate to receive account activity.
 @protocol GSAccountDelegate <NSObject>
-
+@optional
+    - (void)accountStatusChange:(GSAccountStatus)status;
 /// Called when an account recieves an incoming call.
 /** Call GSCall::begin to accept incoming call or GSCall::end to deny. 
  *  This should be done in a timely fashion since we do not support timeouts for incoming call yet. */
-- (void)account:(GSAccount *)account didReceiveIncomingCall:(GSCall *)call;
+@optional
+    - (void)account:(GSAccount *)account didReceiveIncomingCall:(GSCall *)call;
 
 @end
 
@@ -36,6 +38,7 @@ typedef enum {
 
 @property (nonatomic, readonly) int accountId; ///< Account Id, automatically assigned by PJSIP.
 @property (nonatomic, readonly) GSAccountStatus status; ///< Account registration status. Supports KVO notification.
+@property (nonatomic, readonly) GSAccountConfiguration *config;
 
 @property (nonatomic, unsafe_unretained) id<GSAccountDelegate> delegate; ///< Account activity delegate.
 
@@ -44,7 +47,11 @@ typedef enum {
  *  Usually this is called automatically by the GSUserAgent instance. */
 - (BOOL)configure:(GSAccountConfiguration *)configuration;
 
-- (BOOL)connect; ///< Connects and begin registering with the configured SIP registration server.
+- (void)connectWithCompletion:(void (^)(BOOL success))block;
+//- (BOOL)connect; ///< Connects and begin registering with the configured SIP registration server.
 - (BOOL)disconnect; ///< Unregister from the SIP registration server and disconnects.
+
+/** add by Kévin Budain **/
+- (BOOL)isConnected; /// test user.status
 
 @end
