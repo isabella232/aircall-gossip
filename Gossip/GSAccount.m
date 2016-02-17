@@ -107,22 +107,6 @@ static const NSString *keyBlock = @"block";
 
 #define GS_BLOCK_SAFE_RUN(block, ...) { if (block) (block)(__VA_ARGS__); }
 #define GS_BLOCK_SAFE_RUN_MAINTHREAD(block, ...) { dispatch_async(dispatch_get_main_queue(), ^(void) { if (block) (block)(__VA_ARGS__); }); }
-//
-//- (BOOL)connect {
-//    NSAssert(!!_config, @"GSAccount not configured.");
-//
-//    if (_accountId != PJSUA_INVALID_ID) {
-//        GSReturnNoIfFails(pjsua_acc_set_registration(_accountId, PJ_TRUE));
-//        GSReturnNoIfFails(pjsua_acc_set_online_status(_accountId, PJ_TRUE));
-//
-//        // this may freeze main thread:
-//        // pjsua_acc_set_registration(_accountId, PJ_TRUE);
-//        // pjsua_acc_set_online_status(_accountId, PJ_TRUE);
-//
-//        return YES;
-//    }
-//    return NO;
-//}
 
 - (void)connectWithCompletion:(void (^)(BOOL success))block {
     NSAssert(!!_config, @"GSAccount not configured.");

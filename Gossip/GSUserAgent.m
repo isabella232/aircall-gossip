@@ -77,7 +77,6 @@
 
 
 - (BOOL)configure:(GSConfiguration *)config {
-//    GSAssert(!_config, @"Gossip: User agent is already configured.");
     if (_config) [self reset];
     _config = [config copy];
     
