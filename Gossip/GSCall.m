@@ -372,4 +372,41 @@
 	if (!success) NSLog(@"AVAudioSession error setActive: %@", [error localizedDescription]);
 }
 
+// Retreive custom headers from a call (inbound)
+- (NSString *)getCustomHeader:(NSString *)key {
+    if (_msg == nil)
+        return @"";
+
+    NSArray *headers = [_msg componentsSeparatedByString:@"\n"];
+
+    for (NSString *tmpHeader in headers) {
+        if ([tmpHeader rangeOfString:key options:NSCaseInsensitiveSearch].location != NSNotFound) {
+            NSString *headerValue = [tmpHeader componentsSeparatedByString:@":"][1];
+            return [headerValue stringByTrimmingCharactersInSet: [NSCharacterSet whitespaceAndNewlineCharacterSet]];
+        }
+    }
+
+    return @"";
+}
+
+// Get Current Mic level
+- (float)getCurrentMicVolume {
+    unsigned int micVolume = 0;
+
+    if (_callId == PJSUA_INVALID_ID) {
+        return (float)micVolume;
+    }
+
+    pjsua_call_info callInfo;
+    GSReturnValueIfFails(pjsua_call_get_info(_callId, &callInfo), (float)micVolume);
+
+    if (callInfo.media_status == PJSUA_CALL_MEDIA_ACTIVE) {
+        pjsua_conf_port_id callPort = pjsua_call_get_conf_port(_callId);
+        if (callPort != PJSUA_INVALID_ID) {
+            pjsua_conf_get_signal_level(callPort, &micVolume, &speakerVolume);
+        }
+    }
+    return (float)micVolume;
+}
+
 @end

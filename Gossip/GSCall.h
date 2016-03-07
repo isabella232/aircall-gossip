@@ -77,4 +77,8 @@ typedef enum {
 
 - (void)useSpeaker;
 - (void)stopSpeaker;
+
+- (NSString *)getCustomHeader:(NSString *)key;
+- (float)getCurrentMicVolume;
+
 @end
