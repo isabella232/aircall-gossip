@@ -88,21 +88,21 @@
     pjsua_config uaConfig;
     pjsua_logging_config logConfig;
     pjsua_media_config mediaConfig;
-    
+
     pjsua_config_default(&uaConfig);
     [GSDispatch configureCallbacksForAgent:&uaConfig];
-    
+
     pjsua_logging_config_default(&logConfig);
     logConfig.level = _config.logLevel;
     logConfig.console_level = _config.consoleLogLevel;
-    
+
     pjsua_media_config_default(&mediaConfig);
     mediaConfig.clock_rate = _config.clockRate;
     mediaConfig.snd_clock_rate = _config.soundClockRate;
     mediaConfig.ec_tail_len = 0; // not sure what this does (Siphon use this.)
-    
+
     GSReturnNoIfFails(pjsua_init(&uaConfig, &logConfig, &mediaConfig));
-    
+
     // Configure the DNS resolvers to also handle SRV records
     pjsip_endpoint* endpoint = pjsua_get_pjsip_endpt();
     pj_dns_resolver* resolver;
@@ -111,13 +111,13 @@
     GSReturnNoIfFails(pjsip_endpt_create_resolver(endpoint, &resolver));
     GSReturnNoIfFails(pj_dns_resolver_set_ns(resolver, 1, servers, nil));
     GSReturnNoIfFails(pjsip_endpt_set_resolver(endpoint, resolver));
-    
+
     // create UDP transport
     // TODO: Make configurable? (which transport type to use/other transport opts)
     // TODO: Make separate class? since things like public_addr might be useful to some.
     pjsua_transport_config transportConfig;
     pjsua_transport_config_default(&transportConfig);
-    
+
     pjsip_transport_type_e transportType = 0;
     switch (_config.transportType) {
         case GSUDPTransportType: transportType = PJSIP_TRANSPORT_UDP; break;
@@ -125,7 +125,7 @@
         case GSTCPTransportType: transportType = PJSIP_TRANSPORT_TCP; break;
         case GSTCP6TransportType: transportType = PJSIP_TRANSPORT_TCP6; break;
     }
-    
+
     GSReturnNoIfFails(pjsua_transport_create(transportType, &transportConfig, &_transportId));
     [self setStatus:GSUserAgentStateConfigured];
 
@@ -156,13 +156,13 @@
 
 - (NSArray *)arrayOfAvailableCodecs {
     GSAssert(!!_config, @"Gossip: User agent not configured.");
-    
+
     NSMutableArray *arr = [[NSMutableArray alloc] init];
-    
+
     unsigned int count = 255;
     pjsua_codec_info codecs[count];
     GSReturnNilIfFails(pjsua_enum_codecs(codecs, &count));
-    
+
     for (int i = 0; i < count; i++) {
         pjsua_codec_info pjCodec = codecs[i];
         
@@ -170,8 +170,126 @@
         codec = [codec initWithCodecInfo:&pjCodec];
         [arr addObject:codec];
     }
-    
+
     return [NSArray arrayWithArray:arr];
+}
+
+- (NSMutableArray*)getDevicesList {
+    NSMutableArray *devicesArr = [[NSMutableArray alloc] init];
+    if (_status < GSUserAgentStateConfigured) {
+        return devicesArr;
+    }
+
+    [self updateAudioDevices];
+
+    int dev_count;
+    pjmedia_aud_dev_index dev_idx;
+    pj_status_t status;
+    dev_count = pjmedia_aud_dev_count();
+    printf("Got %d audio devices\n", dev_count);
+    if (dev_count == 0)
+        return devicesArr;
+
+    for (dev_idx = 0; dev_idx < dev_count; ++dev_idx) {
+        pjmedia_aud_dev_info info;
+        status = pjmedia_aud_dev_get_info(dev_idx, &info);
+        
+        if (status != PJ_SUCCESS)
+            continue;
+
+        NSString *name = [NSString stringWithFormat:@"%s", info.name];
+        
+        NSNumber *isBuiltIn = [NSNumber numberWithBool:NO];
+        if ([name rangeOfString:@"Built-in"].location != NSNotFound) {
+            isBuiltIn = [NSNumber numberWithBool:YES];
+        }
+
+        // Sometime, Mac OSX return `Built-in Microph` instead of `Built-in Microphone`
+        if ([name rangeOfString:@"Microph"].location != NSNotFound && [name rangeOfString:@"Microphone"].location == NSNotFound) {
+            name = [NSString stringWithFormat:@"%@%s", name, "one"];
+        }
+        
+        
+
+        NSString *index = [NSString stringWithFormat:@"%i", dev_idx];
+        NSString *input = [NSString stringWithFormat:@"%i", info.input_count];
+        NSString *output = [NSString stringWithFormat:@"%i", info.output_count];
+        NSDictionary *dict = @{
+                               @"index": index,
+                               @"name" : name,
+                               @"input" :  input,
+                               @"output" :  output,
+                               @"isBuiltIn" : isBuiltIn
+                               };
+
+        [devicesArr addObject:dict];
+        
+        printf("%d. %s (in=%d, out=%d)\n",
+               dev_idx, info.name,
+               info.input_count, info.output_count);
+    }
+
+    return devicesArr;
+}
+
+- (BOOL)setSoundInputDevice:(NSInteger)input soundOutputDevice:(NSInteger)output {
+    if (_status < GSUserAgentStateConfigured)
+        return NO;
+
+    pj_status_t status = pjsua_set_snd_dev((int)input, (int)output);
+
+    return (status == PJ_SUCCESS) ? YES : NO;
+}
+
+// This method will leave application silent. |setSoundInputDevice:soundOutputDevice:| must be called after calling this
+// method to set sound IO. Usually application controller is responsible of sending
+// |setSoundInputDevice:soundOutputDevice:| to set sound IO after this method is called.
+- (void)updateAudioDevices {
+    if (_status < GSUserAgentStateConfigured) {
+        return;
+    }
+
+    // Stop sound device and disconnect it from the conference.
+    if (pjsua_set_null_snd_dev() != PJ_SUCCESS)
+        return;
+
+    // Reinit sound device.
+    if (pjmedia_snd_deinit() != PJ_SUCCESS)
+        return;
+
+    pj_pool_factory *factory = pjsua_get_pool_factory();
+    if (factory == NULL)
+        return;
+
+    pjmedia_snd_init(factory);
+}
+
+
+
++ (void)dispatchLogEntry:(const char*) data withLevel:(int) level {
+    if (level <= PJSIP_LOG_LEVEL) {
+        NSString *content = [NSString stringWithUTF8String:data];
+
+        NSDictionary *info = nil;
+        info = [NSDictionary dictionaryWithObject:content forKey:@"content"];
+
+        NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
+        [center postNotificationName:@"LogEntriesNotification"
+                              object:self
+                            userInfo:info];
+
+        // Print on stdout
+        NSLog(@"%@", content);
+    }
+}
+
+// Currently disabled (see logconfig cb)
+void on_log_entry(int level, const char *data, int len) {
+    @autoreleasepool {
+        dispatch_sync(_queue, ^{
+            [GSUserAgent dispatchLogEntry:data withLevel:level];
+        });
+    }
 }
 
 @end

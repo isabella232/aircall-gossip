@@ -67,4 +67,16 @@ typedef enum {
 /// Gets an array of GSCodecInfo for codecs loaded by PJSIP.
 - (NSArray *)arrayOfAvailableCodecs;
 
+// Sets sound input and output.
+- (BOOL)setSoundInputDevice:(NSInteger)input
+          soundOutputDevice:(NSInteger)output;
+
+// Updates list of audio devices.
+// You might want to call this method when system audio devices are changed. After calling this method,
+// |setSoundInputDevice:soundOutputDevice:| must be called to set appropriate sound IO.
+- (void)updateAudioDevices;
+
+// Get the devices list
+- (NSMutableArray*)getDevicesList;
+
 @end
