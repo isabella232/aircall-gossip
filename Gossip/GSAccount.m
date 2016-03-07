@@ -273,10 +273,10 @@ static void connectInBackground(NSDictionary *dict) {
 }
 
 - (BOOL)isConnected {
-    if(_status == GSAccountStatusConnected)
-        return true;
-
-    return false;
+    pjsua_acc_info info;
+    GSReturnNoIfFails(pjsua_acc_get_info(_accountId, &info));
+    
+    return (info.online_status == PJ_TRUE);
 }
 
 @end

@@ -32,6 +32,8 @@ typedef enum {
 
 @property (nonatomic, strong) GSAccountConfiguration *account;
 
+@property (nonatomic) unsigned int port; ///< PJSIP port
+
 + (id)defaultConfiguration;
 + (id)configurationWithConfiguration:(GSConfiguration *)configuration;
 
