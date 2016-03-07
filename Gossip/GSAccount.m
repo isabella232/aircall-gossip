@@ -12,7 +12,6 @@
 #import "GSUserAgent.h"
 #import "PJSIP.h"
 #import "Util.h"
-#import "Aircall-Swift.h"
 
 
 @implementation GSAccount {
@@ -264,8 +263,6 @@ static void connectInBackground(NSDictionary *dict) {
         } else {
             accStatus = GSAccountStatusInvalid;
         }
-        NSString *string = [NSString stringWithFormat:@"Status code : %u",code];
-        [[LogManager sharedInstance] info:string filePath:nil functionName:nil lineNumber:nil];
     }
 
     __weak typeof(self) weakSelf = self;
