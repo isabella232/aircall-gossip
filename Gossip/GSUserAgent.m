@@ -264,32 +264,4 @@
     pjmedia_snd_init(factory);
 }
 
-
-
-+ (void)dispatchLogEntry:(const char*) data withLevel:(int) level {
-    if (level <= PJSIP_LOG_LEVEL) {
-        NSString *content = [NSString stringWithUTF8String:data];
-
-        NSDictionary *info = nil;
-        info = [NSDictionary dictionaryWithObject:content forKey:@"content"];
-
-        NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
-        [center postNotificationName:@"LogEntriesNotification"
-                              object:self
-                            userInfo:info];
-
-        // Print on stdout
-        NSLog(@"%@", content);
-    }
-}
-
-// Currently disabled (see logconfig cb)
-void on_log_entry(int level, const char *data, int len) {
-    @autoreleasepool {
-        dispatch_sync(_queue, ^{
-            [GSUserAgent dispatchLogEntry:data withLevel:level];
-        });
-    }
-}
-
 @end
