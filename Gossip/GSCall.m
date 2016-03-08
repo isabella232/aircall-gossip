@@ -116,6 +116,10 @@
     [self didChangeValueForKey:@"callId"];
 }
 
+- (void)setCallMsg:(NSString *)msg {
+    _msg = msg;
+}
+
 - (void)setStatus:(GSCallStatus)status {
     [self willChangeValueForKey:@"status"];
     _status = status;
