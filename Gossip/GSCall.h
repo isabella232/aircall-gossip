@@ -75,9 +75,6 @@ typedef enum {
 - (void)muteMicrophone;
 - (void)unmuteMicrophone;
 
-- (void)useSpeaker;
-- (void)stopSpeaker;
-
 - (NSString *)getCustomHeader:(NSString *)key;
 - (float)getCurrentMicVolume;
 

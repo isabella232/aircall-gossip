@@ -336,42 +336,6 @@
 	}
 }
 
-- (void)useSpeaker {
-	/** detect speaker with pjsip **/
-//	pjmedia_aud_dev_route route = PJMEDIA_AUD_DEV_ROUTE_LOUDSPEAKER;
-//	pjmedia_aud_stream_set_cap(nil, PJMEDIA_AUD_DEV_CAP_INPUT_ROUTE, &route);
-//	pj_status_t status = pjsua_snd_set_setting(PJMEDIA_AUD_DEV_CAP_INPUT_ROUTE, &route, PJ_FALSE);
-//	if (status != PJ_SUCCESS){
-//		NSLog(@"Error enabling loudspeaker");
-//	}
-	pjsua_call_info ci;
-
-
-	pjsua_call_get_info(_callId, &ci);
-	BOOL success;
-	AVAudioSession *session = [AVAudioSession sharedInstance];
-	NSError *error = nil;
-
-	success = [session setCategory:AVAudioSessionCategoryPlayAndRecord
-					   withOptions:AVAudioSessionCategoryOptionMixWithOthers
-							 error:&error];
-	if (!success) NSLog(@"AVAudioSession error setCategory: %@", [error localizedDescription]);
-
-	success = [session overrideOutputAudioPort:AVAudioSessionPortOverrideSpeaker error:&error];
-	if (!success) NSLog(@"AVAudioSession error overrideOutputAudioPort: %@", [error localizedDescription]);
-
-	success = [session setActive:YES error:&error];
-	if (!success) NSLog(@"AVAudioSession error setActive: %@", [error localizedDescription]);
-}
-
-- (void)stopSpeaker {
-	BOOL success;
-	AVAudioSession *session = [AVAudioSession sharedInstance];
-	NSError *error = nil;
-
-	success = [session setActive:NO error:&error];
-	if (!success) NSLog(@"AVAudioSession error setActive: %@", [error localizedDescription]);
-}
 
 // Retreive custom headers from a call (inbound)
 - (NSString *)getCustomHeader:(NSString *)key {
