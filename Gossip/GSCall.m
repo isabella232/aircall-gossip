@@ -16,8 +16,6 @@
 #import "PJSIP.h"
 #import "Util.h"
 
-#import <AVFoundation/AVFoundation.h>
-
 
 @implementation GSCall {
     pjsua_call_id _callId;
@@ -45,9 +43,9 @@
     return call;
 }
 
-+ (id)incomingCallWithId:(int)callId toAccount:(GSAccount *)account {
++ (id)incomingCallWithId:(int)callId toAccount:(GSAccount *)account withMsg:(NSString *)msg {
     GSIncomingCall *call = [GSIncomingCall alloc];
-    call = [call initWithCallId:callId toAccount:account];
+    call = [call initWithCallId:callId toAccount:account withMsg:msg];
 
     return call;
 }
@@ -200,7 +198,6 @@
         case PJSIP_INV_STATE_NULL: {
             callStatus = GSCallStatusReady;
         } break;
-            
         case PJSIP_INV_STATE_CALLING: {
             callStatus = GSCallStatusCalling;
         } break;

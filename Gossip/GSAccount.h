@@ -48,10 +48,7 @@ typedef enum {
 - (BOOL)configure:(GSAccountConfiguration *)configuration;
 
 - (void)connectWithCompletion:(void (^)(BOOL success))block;
-//- (BOOL)connect; ///< Connects and begin registering with the configured SIP registration server.
 - (BOOL)disconnect; ///< Unregister from the SIP registration server and disconnects.
-
-/** add by Kévin Budain **/
 - (BOOL)isConnected; /// test user.status
 
 @end

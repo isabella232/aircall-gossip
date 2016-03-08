@@ -53,7 +53,7 @@ typedef enum {
 /// Creates a new incoming call from the specified PJSIP call id. And associate it with the speicifed account.
 /** Do not call this method directly, implement GSAccountDelegate and listen to the
  *  GSAccountDelegate::account:didReceiveIncomingCall: message instead. */
-+ (id)incomingCallWithId:(int)callId toAccount:(GSAccount *)account;
++ (id)incomingCallWithId:(int)callId toAccount:(GSAccount *)account withMsg:(NSString *)msg;
 
 /// Initialize a new call with the specified account.
 /** Do not initialize a GSCall instance directly, instead use one of the provided static methods.
@@ -68,14 +68,15 @@ typedef enum {
 
 - (BOOL)sendDTMFDigits:(NSString *)digits; ///< Sends DTMF digits over the call.
 
+- (NSString *)getCustomHeader:(NSString *)key;
+
+- (float)getCurrentMicVolume;
+
 - (NSString *)getFrom;
 - (void)holdCall;
 - (void)removeHoldCall;
 
 - (void)muteMicrophone;
 - (void)unmuteMicrophone;
-
-- (NSString *)getCustomHeader:(NSString *)key;
-- (float)getCurrentMicVolume;
 
 @end

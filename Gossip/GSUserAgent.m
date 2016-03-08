@@ -99,7 +99,12 @@
     pjsua_media_config_default(&mediaConfig);
     mediaConfig.clock_rate = _config.clockRate;
     mediaConfig.snd_clock_rate = _config.soundClockRate;
-    mediaConfig.ec_tail_len = 0; // not sure what this does (Siphon use this.)
+
+    // BDSOUND config?
+    mediaConfig.ec_tail_len = 0;
+    mediaConfig.no_vad = true;
+    mediaConfig.snd_play_latency = 0;
+    mediaConfig.snd_rec_latency = 0;
 
     GSReturnNoIfFails(pjsua_init(&uaConfig, &logConfig, &mediaConfig));
 

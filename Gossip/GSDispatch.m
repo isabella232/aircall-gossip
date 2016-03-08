@@ -75,7 +75,7 @@ static dispatch_queue_t _queue = NULL;
     info = [NSDictionary dictionaryWithObjectsAndKeys:
             [NSNumber numberWithInt:accountId], GSSIPAccountIdKey,
             [NSNumber numberWithInt:callId], GSSIPCallIdKey,
-            [NSValue valueWithPointer:data], GSSIPDataKey, nil];
+            [NSString stringWithUTF8String:data->msg_info.msg_buf], GSSIPDataKey, nil];
     
     NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
     [center postNotificationName:GSSIPIncomingCallNotification

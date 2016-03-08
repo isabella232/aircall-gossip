@@ -12,6 +12,7 @@
 
 // private setter for internal use
 - (void)setCallId:(int)callId;
+- (void)setCallMsg:(NSString *)msg;
 - (void)setStatus:(GSCallStatus)status;
 
 @end

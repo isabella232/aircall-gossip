@@ -38,6 +38,9 @@
     
     // default volume scale to 2.0 so 1.0 is twice as loud as PJSIP would normally emit.
     _volumeScale = 2.0;
+
+    // default PJSIP port is 5060
+    _port = 5060;
     
     _account = [GSAccountConfiguration defaultConfiguration];
     return self;
@@ -59,6 +62,7 @@
     replica.clockRate = self.clockRate;
     replica.soundClockRate = self.soundClockRate;
     replica.volumeScale = self.volumeScale;
+    replica.port = self.port;
 
     replica.account = [self.account copy];
     return replica;

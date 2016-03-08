@@ -210,13 +210,15 @@ static void connectInBackground(NSDictionary *dict) {
 - (void)didReceiveIncomingCall:(NSNotification *)notif {
     pjsua_acc_id accountId = GSNotifGetInt(notif, GSSIPAccountIdKey);
     pjsua_call_id callId = GSNotifGetInt(notif, GSSIPCallIdKey);
+    NSString *msg = [notif.userInfo objectForKey:GSSIPDataKey];
+
     if (accountId == PJSUA_INVALID_ID || accountId != _accountId)
         return;
     
     __block GSAccount *self_ = self;
     __block id delegate_ = _delegate;
     dispatch_async(dispatch_get_main_queue(), ^{
-        GSCall *call = [GSCall incomingCallWithId:callId toAccount:self];        
+        GSCall *call = [GSCall incomingCallWithId:callId toAccount:self withMsg:msg];
         if (![delegate_ respondsToSelector:@selector(account:didReceiveIncomingCall:)])
             return; // call is disposed/hungup on dealloc
         
