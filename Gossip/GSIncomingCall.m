@@ -13,9 +13,10 @@
 
 @implementation GSIncomingCall
 
-- (id)initWithCallId:(int)callId toAccount:(GSAccount *)account {
+- (id)initWithCallId:(int)callId toAccount:(GSAccount *)account withMsg:(NSString *)msg {
     if (self = [super initWithAccount:account]) {
         [self setCallId:callId];
+        [self setCallMsg:msg];
     }
     return self;
 }
