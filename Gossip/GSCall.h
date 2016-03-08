@@ -22,7 +22,7 @@ typedef enum {
 
 @protocol CallsCallbackDelegate <NSObject>
 @optional
-    -(void)callStatusChanged:(GSCallStatus)status;
+    -(void)callStatusChanged:(GSCallStatus)status withCallId:(int) callId;
 @end
 
 

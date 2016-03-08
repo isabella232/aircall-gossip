@@ -21,6 +21,7 @@
 
 @implementation GSCall {
     pjsua_call_id _callId;
+    NSString *_msg;
     float _volume;
     float _micVolume;
     float _volumeScale;
@@ -118,7 +119,7 @@
 - (void)setStatus:(GSCallStatus)status {
     [self willChangeValueForKey:@"status"];
     _status = status;
-    [self.delegate callStatusChanged: _status];
+    [self.delegate callStatusChanged: _status withCallId: [self callId]];
     [self didChangeValueForKey:@"status"];
 }
 
@@ -392,6 +393,7 @@
 // Get Current Mic level
 - (float)getCurrentMicVolume {
     unsigned int micVolume = 0;
+    unsigned int speakerVolume = 0;
 
     if (_callId == PJSUA_INVALID_ID) {
         return (float)micVolume;
