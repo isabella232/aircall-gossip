@@ -305,7 +305,7 @@
 	}
 }
 
-- (void)muteMicrophone {
+- (BOOL)muteMicrophone {
 	pjsua_call_info ci;
 	pj_status_t status = pjsua_call_get_info(_callId, &ci);
 	if (status == PJ_SUCCESS) {
@@ -314,14 +314,17 @@
 			if( pjsipConfAudioId != 0 ) {
 				pjsua_conf_disconnect(0, pjsipConfAudioId);
 			}
+            return true;
 		}
 		@catch (NSException *exception) {
 			NSLog(@"Unable to mute microphone: %@", exception);
+            return false;
 		}
 	}
+    return false;
 }
 
-- (void)unmuteMicrophone {
+- (BOOL)unmuteMicrophone {
 	pjsua_call_info ci;
 	pj_status_t status = pjsua_call_get_info(_callId, &ci);
 	if (status == PJ_SUCCESS) {
@@ -330,11 +333,14 @@
 			if( pjsipConfAudioId != 0 ) {
 				pjsua_conf_connect(0,pjsipConfAudioId);
 			}
+            return true;
 		}
 		@catch (NSException *exception) {
 			NSLog(@"Unable to un-mute microphone: %@", exception);
+            return false;
 		}
 	}
+    return false;
 }
 
 

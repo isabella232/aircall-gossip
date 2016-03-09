@@ -76,7 +76,7 @@ typedef enum {
 - (void)holdCall;
 - (void)removeHoldCall;
 
-- (void)muteMicrophone;
-- (void)unmuteMicrophone;
+- (BOOL)muteMicrophone;
+- (BOOL)unmuteMicrophone;
 
 @end
