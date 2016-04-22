@@ -119,7 +119,7 @@
     loggingConfig.console_level = _config.consoleLogLevel;
 
     pjsua_media_config_default(&mediaConfig);
-    mediaConfig.no_vad = true;
+    mediaConfig.no_vad = false;
     mediaConfig.enable_ice = false;
     mediaConfig.snd_auto_close_time = 1;
 
@@ -167,19 +167,46 @@
 
 
 - (BOOL)start {
-    GSReturnNoIfFails(pjsua_start());
+    // Start PJSUA.
+    pj_status_t status = pjsua_start();
+    if (status != PJ_SUCCESS) {
+        NSLog(@"Error starting PJSUA");
+        [self reset];
+        [[self pjsuaLock] unlock];
+        return false;
+    }
     [self setStatus:GSUserAgentStateStarted];
     return YES;
 }
 
 - (BOOL)reset {
+    pj_status_t status;
+    pj_thread_desc aPJThreadDesc;
+
+    if (!pj_thread_is_registered()) {
+        pj_thread_t *pjThread;
+        pj_status_t status = pj_thread_register(NULL, aPJThreadDesc, &pjThread);
+
+        if (status != PJ_SUCCESS) {
+            NSLog(@"Error registering thread at PJSUA");
+        }
+    }
+
+    [[self pjsuaLock] lock];
+
     [_account disconnect];
 
     // needs to nil account before pjsua_destroy so pjsua_acc_del succeeds.
     _transportId = PJSUA_INVALID_ID;
     _account = nil;
     _config = nil;
-    GSReturnNoIfFails(pjsua_destroy());
+    // Destroy PJSUA.
+    status = pjsua_destroy();
+
+    if (status != PJ_SUCCESS) {
+        NSLog(@"Error stopping SIP user agent");
+        return false;
+    }
     [self setStatus:GSUserAgentStateDestroyed];
     return YES;
 }
