@@ -79,48 +79,67 @@
 - (BOOL)configure:(GSConfiguration *)config {
     if (_config) [self reset];
     _config = [config copy];
-    
-    // create agent
-    GSReturnNoIfFails(pjsua_create());
-    [self setStatus:GSUserAgentStateCreated];
-    
-    // configure agent
-    pjsua_config uaConfig;
-    pjsua_logging_config logConfig;
+
+    if (_status != GSUserAgentStateUninitialized && _status != GSUserAgentStateDestroyed) {
+        return [_account configure: nil];
+    }
+    [[self pjsuaLock] lock];
+
+    [self setStatus: GSUserAgentStateCreated];
+
+    // Create PJSUA on the main thread to make all subsequent calls from the main
+    // thread.
+    pj_status_t status = pjsua_create();
+    if (status != PJ_SUCCESS) {
+        NSLog(@"Error creating PJSUA");
+        [self setStatus: GSUserAgentStateDestroyed];
+        [[self pjsuaLock] unlock];
+        return [_account configure: nil];
+    }
+
+    pj_thread_desc aPJThreadDesc;
+    if (!pj_thread_is_registered()) {
+        pj_thread_t *pjThread;
+        status = pj_thread_register(NULL, aPJThreadDesc, &pjThread);
+        if (status != PJ_SUCCESS) {
+            NSLog(@"Error registering thread at PJSUA");
+        }
+    }
+
+    pjsua_config userAgentConfig;
+    pjsua_logging_config loggingConfig;
     pjsua_media_config mediaConfig;
+    pjsua_transport_config transportConfig;
 
-    pjsua_config_default(&uaConfig);
-    [GSDispatch configureCallbacksForAgent:&uaConfig];
+    pjsua_config_default(&userAgentConfig);
+    [GSDispatch configureCallbacksForAgent:&userAgentConfig];
 
-    pjsua_logging_config_default(&logConfig);
-    logConfig.level = _config.logLevel;
-    logConfig.console_level = _config.consoleLogLevel;
+    pjsua_logging_config_default(&loggingConfig);
+    loggingConfig.level = _config.logLevel;
+    loggingConfig.console_level = _config.consoleLogLevel;
 
     pjsua_media_config_default(&mediaConfig);
-    mediaConfig.clock_rate = _config.clockRate;
-    mediaConfig.snd_clock_rate = _config.soundClockRate;
-
-    // BDSOUND config?
-    mediaConfig.ec_tail_len = 0;
     mediaConfig.no_vad = true;
-    mediaConfig.snd_play_latency = 0;
-    mediaConfig.snd_rec_latency = 0;
+    mediaConfig.enable_ice = false;
+    mediaConfig.snd_auto_close_time = 1;
 
-    GSReturnNoIfFails(pjsua_init(&uaConfig, &logConfig, &mediaConfig));
+//    // BDSOUND config?
+//    mediaConfig.ec_tail_len = 0;
+//    mediaConfig.no_vad = true;
+//    mediaConfig.snd_play_latency = 0;
+//    mediaConfig.snd_rec_latency = 0;
 
-    // Configure the DNS resolvers to also handle SRV records
-    pjsip_endpoint* endpoint = pjsua_get_pjsip_endpt();
-    pj_dns_resolver* resolver;
-    pj_str_t google_dns = [GSPJUtil PJStringWithString:@"8.8.8.8"];
-    struct pj_str_t servers[] = { google_dns };
-    GSReturnNoIfFails(pjsip_endpt_create_resolver(endpoint, &resolver));
-    GSReturnNoIfFails(pj_dns_resolver_set_ns(resolver, 1, servers, nil));
-    GSReturnNoIfFails(pjsip_endpt_set_resolver(endpoint, resolver));
+    status = pjsua_init(&userAgentConfig, &loggingConfig, &mediaConfig);
+    if (status != PJ_SUCCESS) {
+        NSLog(@"Error initializing PJSUA");
+        [self reset];
+        [[self pjsuaLock] unlock];
+        return [_account configure: nil];
+    }
 
     // create UDP transport
     // TODO: Make configurable? (which transport type to use/other transport opts)
     // TODO: Make separate class? since things like public_addr might be useful to some.
-    pjsua_transport_config transportConfig;
     pjsua_transport_config_default(&transportConfig);
 
     pjsip_transport_type_e transportType = 0;
@@ -131,7 +150,14 @@
         case GSTCP6TransportType: transportType = PJSIP_TRANSPORT_TCP6; break;
     }
 
-    GSReturnNoIfFails(pjsua_transport_create(transportType, &transportConfig, &_transportId));
+    status = pjsua_transport_create(transportType, &transportConfig, &_transportId);
+    if (status != PJ_SUCCESS) {
+        NSLog(@"Error creating transport");
+        [self reset];
+        [[self pjsuaLock] unlock];
+        return [_account configure: nil];
+    }
+
     [self setStatus:GSUserAgentStateConfigured];
 
     // configure account
