@@ -119,7 +119,7 @@
     loggingConfig.console_level = _config.consoleLogLevel;
 
     pjsua_media_config_default(&mediaConfig);
-    mediaConfig.no_vad = false;
+    mediaConfig.no_vad = true;
     mediaConfig.enable_ice = false;
     mediaConfig.snd_auto_close_time = 1;
 
