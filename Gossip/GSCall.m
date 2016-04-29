@@ -85,6 +85,14 @@
     return self;
 }
 
+- (BOOL)isActive {
+    if (_callId == PJSUA_INVALID_ID) {
+        return NO;
+    }
+
+    return (pjsua_call_is_active(_callId)) ? YES : NO;
+}
+
 - (void)dealloc {
     NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
     [center removeObserver:self];
@@ -94,8 +102,8 @@
         _ringback = nil;
     }
 
-    if (_callId != PJSUA_INVALID_ID && pjsua_call_is_active(_callId)) {
-        GSLogIfFails(pjsua_call_hangup(_callId, 0, NULL, NULL));
+    if ([self isActive]) {
+        [self end];
     }
     
     _account = nil;
@@ -157,8 +165,16 @@
 }
 
 - (BOOL)end {
-    // for child overrides only
-    return NO;
+    if ([self isActive] || self.status == GSCallStatusDisconnected) {
+        pj_status_t status = pjsua_call_hangup(_callId, 0, NULL, NULL);
+        if (status != PJ_SUCCESS) {
+            NSLog(@"Error hanging up call %@", self);
+        }
+    }
+
+    [self setStatus:GSCallStatusDisconnected];
+    [self setCallId:PJSUA_INVALID_ID];
+    return YES;
 }
 
 
@@ -288,58 +304,63 @@
 
 
 - (void)holdCall {
-	pjsua_call_info callInfo;
-	pj_status_t status = pjsua_call_get_info(_callId, &callInfo);
-	if (status == PJ_SUCCESS) {
-		pjsua_call_set_hold(_callId, nil);
-		pjsua_set_no_snd_dev();
-	}
+    if (self.status == GSCallStatusConnected && ![self isOnRemoteHold]) {
+        pjsua_call_set_hold(_callId, nil);
+        pjsua_set_no_snd_dev();
+    }
 }
 
 - (void)removeHoldCall {
-	pjsua_call_info callInfo;
-	pj_status_t status = pjsua_call_get_info(_callId, &callInfo);
-	if (status == PJ_SUCCESS) {
-		pjsua_call_reinvite(_callId, PJ_TRUE, nil);
-		pjsua_set_snd_dev(0, 0);
-	}
+    if (self.status == GSCallStatusConnected) {
+        pjsua_call_reinvite(_callId, PJ_TRUE, nil);
+        pjsua_set_snd_dev(0, 0);
+    }
+}
+
+- (BOOL)isOnRemoteHold {
+    if (_callId == PJSUA_INVALID_ID) {
+        return NO;
+    }
+
+    pjsua_call_info callInfo;
+    pjsua_call_get_info(_callId, &callInfo);
+
+    return (callInfo.media_status == PJSUA_CALL_MEDIA_REMOTE_HOLD) ? YES : NO;
 }
 
 - (BOOL)muteMicrophone {
-	pjsua_call_info ci;
-	pj_status_t status = pjsua_call_get_info(_callId, &ci);
-	if (status == PJ_SUCCESS) {
-		pjsua_conf_port_id pjsipConfAudioId = ci.conf_slot;
-		@try {
-			if( pjsipConfAudioId != 0 ) {
-				pjsua_conf_disconnect(0, pjsipConfAudioId);
-			}
-            return true;
-		}
-		@catch (NSException *exception) {
-			NSLog(@"Unable to mute microphone: %@", exception);
-            return false;
-		}
-	}
+    if ([self isMicrophoneMuted] || self.status != GSCallStatusConnected) {
+        return false;
+    }
+
+    pjsua_call_info callInfo;
+    pjsua_call_get_info(_callId, &callInfo);
+
+    pj_status_t status = pjsua_conf_disconnect(0, callInfo.conf_slot);
+    if (status == PJ_SUCCESS) {
+        [self setMicrophoneMuted:YES];
+        return true;
+    } else {
+        NSLog(@"Error muting microphone in call %@", self);
+    }
     return false;
 }
 
 - (BOOL)unmuteMicrophone {
-	pjsua_call_info ci;
-	pj_status_t status = pjsua_call_get_info(_callId, &ci);
-	if (status == PJ_SUCCESS) {
-		pjsua_conf_port_id pjsipConfAudioId = ci.conf_slot;
-		@try {
-			if( pjsipConfAudioId != 0 ) {
-				pjsua_conf_connect(0,pjsipConfAudioId);
-			}
-            return true;
-		}
-		@catch (NSException *exception) {
-			NSLog(@"Unable to un-mute microphone: %@", exception);
-            return false;
-		}
-	}
+    if (![self isMicrophoneMuted] || self.status != GSCallStatusConnected) {
+        return false;
+    }
+
+    pjsua_call_info callInfo;
+    pjsua_call_get_info(_callId, &callInfo);
+
+    pj_status_t status = pjsua_conf_connect(0, callInfo.conf_slot);
+    if (status == PJ_SUCCESS) {
+        [self setMicrophoneMuted:NO];
+        return true;
+    } else {
+        NSLog(@"Error unmuting microphone in call %@", self);
+    }
     return false;
 }
 

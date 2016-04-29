@@ -40,6 +40,10 @@ typedef enum {
 @property (nonatomic, strong, readonly) GSAccount *account; ///< Default GSAccount instance with the configured SIP account registration.
 @property (nonatomic, readonly) GSUserAgentState status; ///< User agent configuration state. Supports KVO notification.
 
+// NEW VARIABLE
+// A lock that is used to start and stop the receiver.
+@property(strong) NSLock *pjsuaLock;
+
 /// Obtains the shared user agent instance.
 + (GSUserAgent *)sharedAgent;
 

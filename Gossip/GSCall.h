@@ -41,6 +41,11 @@ typedef enum {
 @property (nonatomic, readonly) float volume; ///< Call volume. Set to 0 to mute.
 @property (nonatomic, readonly) float micVolume; ///< Call microphone volume. i.e. the volume to transmit sound from the mic. Set to 0 to mute.
 
+@property(nonatomic, assign, getter=isMicrophoneMuted) BOOL microphoneMuted; // A Boolean value indicating whether microphone is muted.
+// A Boolean value indicating whether the call is active, i.e. it has active
+// INVITE session and the INVITE session has not been disconnected.
+@property(nonatomic, readonly, assign, getter=isActive) BOOL active;
+
 /// Creats a new outgoing call to the specified remoteUri.
 /** Use begin() to begin calling. */
 + (id)outgoingCallToUri:(NSString *)remoteUri
