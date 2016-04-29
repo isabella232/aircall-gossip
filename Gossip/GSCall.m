@@ -288,21 +288,28 @@
 
 
 - (void)holdCall {
-	pjsua_call_info callInfo;
-	pj_status_t status = pjsua_call_get_info(_callId, &callInfo);
-	if (status == PJ_SUCCESS) {
-		pjsua_call_set_hold(_callId, nil);
-		pjsua_set_no_snd_dev();
-	}
+    if (self.status == GSCallStatusConnected && ![self isOnRemoteHold]) {
+        pjsua_call_set_hold(_callId, nil);
+        pjsua_set_no_snd_dev();
+    }
 }
 
 - (void)removeHoldCall {
-	pjsua_call_info callInfo;
-	pj_status_t status = pjsua_call_get_info(_callId, &callInfo);
-	if (status == PJ_SUCCESS) {
-		pjsua_call_reinvite(_callId, PJ_TRUE, nil);
-		pjsua_set_snd_dev(0, 0);
-	}
+    if (self.status == GSCallStatusConnected) {
+        pjsua_call_reinvite(_callId, PJ_TRUE, nil);
+        pjsua_set_snd_dev(0, 0);
+    }
+}
+
+- (BOOL)isOnRemoteHold {
+    if (_callId == PJSUA_INVALID_ID) {
+        return NO;
+    }
+
+    pjsua_call_info callInfo;
+    pjsua_call_get_info(_callId, &callInfo);
+
+    return (callInfo.media_status == PJSUA_CALL_MEDIA_REMOTE_HOLD) ? YES : NO;
 }
 
 - (BOOL)muteMicrophone {
