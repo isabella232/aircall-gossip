@@ -31,14 +31,4 @@
     return YES;
 }
 
-- (BOOL)end {
-    if (self.callId == PJSUA_INVALID_ID) {
-        NSLog(@"Call has already ended.");
-    } else {
-        GSReturnNoIfFails(pjsua_call_hangup(self.callId, 0, NULL, NULL));
-    }
-    [self setStatus:GSCallStatusDisconnected];
-    [self setCallId:PJSUA_INVALID_ID];
-    return YES;}
-
 @end

@@ -85,6 +85,14 @@
     return self;
 }
 
+- (BOOL)isActive {
+    if (_callId == PJSUA_INVALID_ID) {
+        return NO;
+    }
+
+    return (pjsua_call_is_active(_callId)) ? YES : NO;
+}
+
 - (void)dealloc {
     NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
     [center removeObserver:self];
@@ -94,8 +102,8 @@
         _ringback = nil;
     }
 
-    if (_callId != PJSUA_INVALID_ID && pjsua_call_is_active(_callId)) {
-        GSLogIfFails(pjsua_call_hangup(_callId, 0, NULL, NULL));
+    if ([self isActive]) {
+        [self end];
     }
     
     _account = nil;
@@ -157,8 +165,16 @@
 }
 
 - (BOOL)end {
-    // for child overrides only
-    return NO;
+    if ([self isActive] || self.status == GSCallStatusDisconnected) {
+        pj_status_t status = pjsua_call_hangup(_callId, 0, NULL, NULL);
+        if (status != PJ_SUCCESS) {
+            NSLog(@"Error hanging up call %@", self);
+        }
+    }
+
+    [self setStatus:GSCallStatusDisconnected];
+    [self setCallId:PJSUA_INVALID_ID];
+    return YES;
 }
 
 
