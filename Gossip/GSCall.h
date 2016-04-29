@@ -41,6 +41,8 @@ typedef enum {
 @property (nonatomic, readonly) float volume; ///< Call volume. Set to 0 to mute.
 @property (nonatomic, readonly) float micVolume; ///< Call microphone volume. i.e. the volume to transmit sound from the mic. Set to 0 to mute.
 
+@property(nonatomic, assign, getter=isMicrophoneMuted) BOOL microphoneMuted; // A Boolean value indicating whether microphone is muted.
+
 /// Creats a new outgoing call to the specified remoteUri.
 /** Use begin() to begin calling. */
 + (id)outgoingCallToUri:(NSString *)remoteUri

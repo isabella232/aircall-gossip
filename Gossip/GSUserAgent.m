@@ -124,10 +124,9 @@
     mediaConfig.snd_auto_close_time = 1;
 
 //    // BDSOUND config?
-//    mediaConfig.ec_tail_len = 0;
-//    mediaConfig.no_vad = true;
-//    mediaConfig.snd_play_latency = 0;
-//    mediaConfig.snd_rec_latency = 0;
+    mediaConfig.ec_tail_len = 0;
+    mediaConfig.snd_play_latency = 0;
+    mediaConfig.snd_rec_latency = 0;
 
     status = pjsua_init(&userAgentConfig, &loggingConfig, &mediaConfig);
     if (status != PJ_SUCCESS) {
