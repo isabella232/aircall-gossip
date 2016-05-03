@@ -84,18 +84,24 @@
     // End Extra headers
 
     pj_str_t remoteUri = [GSPJUtil PJStringWithString:_remoteUri];
-    
-    pjsua_call_setting callSetting;
-    pjsua_call_setting_default(&callSetting);
-    callSetting.aud_cnt = 1;
-    callSetting.vid_cnt = 0; // TODO: Video calling support?
-    
+
+    // for video later ?
+//    pjsua_call_setting callSetting;
+//    pjsua_call_setting_default(&callSetting);
+//    callSetting.aud_cnt = 1;
+//    callSetting.vid_cnt = 0; // TODO: Video calling support?
+
     pjsua_call_id callId;
-    GSReturnNoIfFails(pjsua_call_make_call(self.account.accountId, &remoteUri, &callSetting, NULL, &msg_data, &callId));
-    
-    [self setCallId:callId];
-    pj_pool_release(pool);
-    return YES;
+    pj_status_t status = pjsua_call_make_call(self.account.accountId, &remoteUri, 0, NULL, &msg_data, &callId);
+    if (status == PJ_SUCCESS) {
+        [self setCallId:callId];
+        pj_pool_release(pool);
+        return YES;
+    } else {
+        pj_pool_release(pool);
+        return false;
+    }
+
 }
 
 @end
