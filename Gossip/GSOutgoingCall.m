@@ -85,12 +85,6 @@
 
     pj_str_t remoteUri = [GSPJUtil PJStringWithString:_remoteUri];
 
-    // for video later ?
-//    pjsua_call_setting callSetting;
-//    pjsua_call_setting_default(&callSetting);
-//    callSetting.aud_cnt = 1;
-//    callSetting.vid_cnt = 0; // TODO: Video calling support?
-
     pjsua_call_id callId;
     pj_status_t status = pjsua_call_make_call(self.account.accountId, &remoteUri, 0, NULL, &msg_data, &callId);
     if (status == PJ_SUCCESS) {
