@@ -86,7 +86,7 @@
 }
 
 - (BOOL)isActive {
-    if (_callId == PJSUA_INVALID_ID) {
+    if (_callId == PJSUA_INVALID_ID || _callId == 0) {
         return NO;
     }
 
