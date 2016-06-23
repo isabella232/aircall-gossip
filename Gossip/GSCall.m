@@ -165,7 +165,7 @@
 }
 
 - (BOOL)end {
-    if ([self isActive] || self.status == GSCallStatusDisconnected) {
+    if ([self isActive] || self.status != GSCallStatusDisconnected) {
         pj_status_t status = pjsua_call_hangup(_callId, 0, NULL, NULL);
         if (status != PJ_SUCCESS) {
             NSLog(@"Error hanging up call %@", self);
