@@ -51,8 +51,8 @@
     [center removeObserver:self];
 
     GSUserAgent *agent = [GSUserAgent sharedAgent];
-    if (_accountId != PJSUA_INVALID_ID && [agent status] != GSUserAgentStateDestroyed) {
-        GSLogIfFails(pjsua_acc_del(_accountId));
+    if (_accountId != PJSUA_INVALID_ID && _accountId == 0 && [agent status] != GSUserAgentStateDestroyed) {
+        pjsua_acc_del(_accountId);
         _accountId = PJSUA_INVALID_ID;
     }
 
