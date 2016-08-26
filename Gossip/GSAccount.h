@@ -40,6 +40,8 @@ typedef enum {
 @property (nonatomic, readonly) GSAccountStatus status; ///< Account registration status. Supports KVO notification.
 @property (nonatomic, readonly) GSAccountConfiguration *config;
 
+@property(strong) NSLock *pjsuaLock;
+
 @property (nonatomic, unsafe_unretained) id<GSAccountDelegate> delegate; ///< Account activity delegate.
 
 /// Configures account with the specified configuration.
