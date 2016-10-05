@@ -205,9 +205,11 @@
 - (void)callStateDidChange:(NSNotification *)notif {
     pjsua_call_id callId = GSNotifGetInt(notif, GSSIPCallIdKey);
     pjsua_acc_id accountId = GSNotifGetInt(notif, GSSIPAccountIdKey);
-    if ( callId != _callId || _account == nil || accountId != _account.accountId || callId == PJSUA_INVALID_ID)
+    if ( callId != _callId || callId == PJSUA_INVALID_ID || _account == nil )
         return;
-    
+    if ( accountId != _account.accountId )
+        return;
+
     pjsua_call_info callInfo;
     pjsua_call_get_info(_callId, &callInfo);
     
