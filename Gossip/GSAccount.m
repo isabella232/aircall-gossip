@@ -50,14 +50,17 @@
     NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
     [center removeObserver:self];
 
+    [[self pjsuaLock] lock];
+
     GSUserAgent *agent = [GSUserAgent sharedAgent];
-    if (_accountId != PJSUA_INVALID_ID && [agent status] != GSUserAgentStateDestroyed) {
-        GSLogIfFails(pjsua_acc_del(_accountId));
-        _accountId = PJSUA_INVALID_ID;
+    if (_accountId != PJSUA_INVALID_ID && _accountId == 0 && [agent status] != GSUserAgentStateDestroyed) {
+        pjsua_acc_del(_accountId);
     }
 
     _accountId = PJSUA_INVALID_ID;
     _config = nil;
+
+    [[self pjsuaLock] unlock];
 }
 
 
@@ -188,9 +191,12 @@ static void connectInBackground(NSDictionary *dict) {
     NSAssert(!!_config, @"GSAccount not configured.");
 
     if (_accountId != PJSUA_INVALID_ID) {
-        GSReturnNoIfFails(pjsua_acc_set_online_status(_accountId, PJ_FALSE));
-        GSReturnNoIfFails(pjsua_acc_set_registration(_accountId, PJ_FALSE));
-        return YES;
+        pj_status_t status = pjsua_acc_set_online_status(_accountId, PJ_FALSE);
+        pj_status_t status1 = pjsua_acc_set_registration(_accountId, PJ_FALSE);
+
+        if (status == PJ_SUCCESS && status1 == PJ_SUCCESS) {
+            return YES;
+        }
     }
     return NO;
 }
