@@ -407,4 +407,15 @@
     return (float)micVolume;
 }
 
+
+- (BOOL)openAudioSession {
+    pj_status_t status = pjsua_set_snd_dev(0, 0);
+    return status == PJ_SUCCESS;
+}
+
+- (void)closeAudioSession {
+    pjsua_set_no_snd_dev();
+}
+
+
 @end

@@ -84,4 +84,7 @@ typedef enum {
 - (BOOL)muteMicrophone;
 - (BOOL)unmuteMicrophone;
 
+- (BOOL)openAudioSession;
+- (void)closeAudioSession;
+
 @end
