@@ -190,7 +190,7 @@ static void connectInBackground(NSDictionary *dict) {
 - (BOOL)disconnect {
     NSAssert(!!_config, @"GSAccount not configured.");
 
-    if (_accountId != PJSUA_INVALID_ID) {
+    if (_accountId != PJSUA_INVALID_ID && self.status == GSCallStatusConnected) {
         pj_status_t status = pjsua_acc_set_online_status(_accountId, PJ_FALSE);
         pj_status_t status1 = pjsua_acc_set_registration(_accountId, PJ_FALSE);
 
