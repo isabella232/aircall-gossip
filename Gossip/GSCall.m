@@ -165,7 +165,7 @@
 }
 
 - (BOOL)end {
-    if (self.status != GSCallStatusDisconnected) {
+    if (self.status != GSCallStatusDisconnected || self.account.status == GSAccountStatusConnected) {
         pj_status_t status = pjsua_call_hangup(_callId, 0, NULL, NULL);
         if (status == PJ_SUCCESS) {
             [self setStatus:GSCallStatusDisconnected];
