@@ -53,7 +53,7 @@
     [[self pjsuaLock] lock];
 
     GSUserAgent *agent = [GSUserAgent sharedAgent];
-    if (_accountId != PJSUA_INVALID_ID && _accountId == 0 && [agent status] != GSUserAgentStateDestroyed) {
+    if ((_accountId != PJSUA_INVALID_ID && _accountId > 0) && [agent status] != GSUserAgentStateDestroyed) {
         pjsua_acc_del(_accountId);
     }
 

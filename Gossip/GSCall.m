@@ -25,6 +25,8 @@
     float _volumeScale;
 }
 
+bool activeSessionAudio = false;
+
 + (id)outgoingCallToUri:(NSString *)remoteUri
             fromAccount:(GSAccount *)account
            withCallerId:(NSString *)callerId
@@ -410,11 +412,15 @@
 
 - (BOOL)openAudioSession {
     pj_status_t status = pjsua_set_snd_dev(0, 0);
-    return status == PJ_SUCCESS;
+    activeSessionAudio = status == PJ_SUCCESS;
+    return activeSessionAudio;
 }
 
 - (void)closeAudioSession {
-    pjsua_set_no_snd_dev();
+    if (activeSessionAudio) {
+        pjsua_set_no_snd_dev();
+    }
+    activeSessionAudio = false;
 }
 
 
