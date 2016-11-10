@@ -418,6 +418,7 @@ bool activeSessionAudio = false;
 
 - (void)closeAudioSession {
     if (activeSessionAudio) {
+        [[_account pjsuaLock] unlock];
         pjsua_set_no_snd_dev();
     }
     activeSessionAudio = false;
