@@ -411,15 +411,21 @@ bool activeSessionAudio = false;
 
 
 - (BOOL)openAudioSession {
-    pj_status_t status = pjsua_set_snd_dev(0, 0);
-    activeSessionAudio = status == PJ_SUCCESS;
-    return activeSessionAudio;
+    if ( _account != nil ) {
+        [[_account pjsuaLock] unlock];
+        pj_status_t status = pjsua_set_snd_dev(0, 0);
+        activeSessionAudio = status == PJ_SUCCESS;
+        return activeSessionAudio;
+    }
+    return true;
 }
 
 - (void)closeAudioSession {
     if (activeSessionAudio) {
-        [[_account pjsuaLock] unlock];
-        pjsua_set_no_snd_dev();
+        if ( _account != nil ) {
+            [[_account pjsuaLock] unlock];
+            pjsua_set_no_snd_dev();
+        }
     }
     activeSessionAudio = false;
 }
