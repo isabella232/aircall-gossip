@@ -48,7 +48,7 @@
 - (BOOL)begin {
     if (![_remoteUri hasPrefix:@"sip:"])
         _remoteUri = [@"sip:" stringByAppendingString:_remoteUri];
-    
+
     // Extra headers:
     pjsua_msg_data msg_data;
     pjsua_msg_data_init(&msg_data);

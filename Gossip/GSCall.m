@@ -209,8 +209,6 @@ bool activeSessionAudio = false;
     pjsua_acc_id accountId = GSNotifGetInt(notif, GSSIPAccountIdKey);
     if ( callId != _callId || callId == PJSUA_INVALID_ID || _account == nil )
         return;
-    if ( accountId != _account.accountId )
-        return;
 
     pjsua_call_info callInfo;
     pjsua_call_get_info(_callId, &callInfo);
@@ -411,21 +409,23 @@ bool activeSessionAudio = false;
 
 
 - (BOOL)openAudioSession {
-    if ( _account != nil ) {
-        [[_account pjsuaLock] unlock];
+    static pj_thread_desc a_thread_desc;
+    static pj_thread_t *a_thread;
+
+    if (!pj_thread_is_registered()) {
+        pj_thread_register("ipjsua", a_thread_desc, &a_thread);
+    }
+
+    if (_account != nil) {
         pj_status_t status = pjsua_set_snd_dev(0, 0);
         activeSessionAudio = status == PJ_SUCCESS;
-        return activeSessionAudio;
     }
-    return true;
+    return activeSessionAudio;
 }
 
 - (void)closeAudioSession {
-    if (activeSessionAudio) {
-        if ( _account != nil ) {
-            [[_account pjsuaLock] unlock];
-            pjsua_set_no_snd_dev();
-        }
+    if (_account != nil) {
+        pjsua_set_no_snd_dev();
     }
     activeSessionAudio = false;
 }

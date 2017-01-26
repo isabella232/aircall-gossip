@@ -24,11 +24,11 @@
 
 - (BOOL)begin {
     if (self.callId == PJSUA_INVALID_ID) {
-        NSLog(@"Call has already ended.");
+        return false;
     } else {
-        GSReturnNoIfFails(pjsua_call_answer(self.callId, 200, NULL, NULL));
+        pj_status_t status = pjsua_call_answer(self.callId, PJSIP_SC_OK, NULL, NULL);
+        return status == PJ_SUCCESS;
     }
-    return YES;
 }
 
 @end
