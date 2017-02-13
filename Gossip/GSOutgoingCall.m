@@ -32,8 +32,10 @@
         _userId = [userId copy];
         _internalToUserId = [internalToUserId copy];
         _appToApp = [appToApp copy];
+        return self;
     }
-    return self;
+
+    return nil;
 }
 
 - (void)dealloc {
